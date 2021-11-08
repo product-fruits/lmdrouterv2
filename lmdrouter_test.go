@@ -55,9 +55,13 @@ func TestRouter(t *testing.T) {
 
 	t.Run("Requests matched correctly", func(t *testing.T) {
 		t.Run("POST /api", func(t *testing.T) {
-			req := events.APIGatewayProxyRequest{
-				HTTPMethod: "POST",
-				Path:       "/api",
+			req := events.APIGatewayV2HTTPRequest{
+				RequestContext: events.APIGatewayV2HTTPRequestContext{
+					HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+						Method: "POST",
+						Path:   "/api",
+					},
+				},
 			}
 			_, err := lmd.matchRequest(&req)
 			assert.Equal(t, nil, err, "Error must be nil")
@@ -65,18 +69,26 @@ func TestRouter(t *testing.T) {
 
 		t.Run("POST /api/", func(t *testing.T) {
 			// make sure trailing slashes are removed
-			req := events.APIGatewayProxyRequest{
-				HTTPMethod: "POST",
-				Path:       "/api/",
+			req := events.APIGatewayV2HTTPRequest{
+				RequestContext: events.APIGatewayV2HTTPRequestContext{
+					HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+						Method: "POST",
+						Path:   "/api/",
+					},
+				},
 			}
 			_, err := lmd.matchRequest(&req)
 			assert.Equal(t, nil, err, "Error must be nil")
 		})
 
 		t.Run("DELETE /api", func(t *testing.T) {
-			req := events.APIGatewayProxyRequest{
-				HTTPMethod: "DELETE",
-				Path:       "/api",
+			req := events.APIGatewayV2HTTPRequest{
+				RequestContext: events.APIGatewayV2HTTPRequestContext{
+					HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+						Method: "DELETE",
+						Path:   "/api",
+					},
+				},
 			}
 			_, err := lmd.matchRequest(&req)
 			assert.NotEqual(t, nil, err, "Error must not be nil")
@@ -87,9 +99,13 @@ func TestRouter(t *testing.T) {
 		})
 
 		t.Run("GET /api/fake-id", func(t *testing.T) {
-			req := events.APIGatewayProxyRequest{
-				HTTPMethod: "GET",
-				Path:       "/api/fake-id",
+			req := events.APIGatewayV2HTTPRequest{
+				RequestContext: events.APIGatewayV2HTTPRequestContext{
+					HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+						Method: "GET",
+						Path:   "/api/fake-id",
+					},
+				},
 			}
 			_, err := lmd.matchRequest(&req)
 			assert.Equal(t, nil, err, "Error must be nil")
@@ -97,9 +113,13 @@ func TestRouter(t *testing.T) {
 		})
 
 		t.Run("GET /api/fake-id/bla", func(t *testing.T) {
-			req := events.APIGatewayProxyRequest{
-				HTTPMethod: "GET",
-				Path:       "/api/fake-id/bla",
+			req := events.APIGatewayV2HTTPRequest{
+				RequestContext: events.APIGatewayV2HTTPRequestContext{
+					HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+						Method: "GET",
+						Path:   "/api/fake-id/bla",
+					},
+				},
 			}
 			_, err := lmd.matchRequest(&req)
 			assert.NotEqual(t, nil, err, "Error must not be nil")
@@ -110,9 +130,13 @@ func TestRouter(t *testing.T) {
 		})
 
 		t.Run("GET /api/fake-id/stuff/fakey-fake", func(t *testing.T) {
-			req := events.APIGatewayProxyRequest{
-				HTTPMethod: "GET",
-				Path:       "/api/fake-id/stuff/fakey-fake",
+			req := events.APIGatewayV2HTTPRequest{
+				RequestContext: events.APIGatewayV2HTTPRequestContext{
+					HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+						Method: "GET",
+						Path:   "/api/fake-id/stuff/fakey-fake",
+					},
+				},
 			}
 			_, err := lmd.matchRequest(&req)
 			assert.Equal(t, nil, err, "Error must be nil")
@@ -123,9 +147,13 @@ func TestRouter(t *testing.T) {
 
 	t.Run("Requests execute correctly", func(t *testing.T) {
 		t.Run("POST /api without auth", func(t *testing.T) {
-			req := events.APIGatewayProxyRequest{
-				HTTPMethod: "POST",
-				Path:       "/api",
+			req := events.APIGatewayV2HTTPRequest{
+				RequestContext: events.APIGatewayV2HTTPRequestContext{
+					HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+						Method: "POST",
+						Path:   "/api",
+					},
+				},
 			}
 			res, err := lmd.Handler(context.Background(), req)
 			assert.Equal(t, nil, err, "Error must not be nil")
@@ -135,9 +163,13 @@ func TestRouter(t *testing.T) {
 		})
 
 		t.Run("POST /api with auth", func(t *testing.T) {
-			req := events.APIGatewayProxyRequest{
-				HTTPMethod: "POST",
-				Path:       "/api",
+			req := events.APIGatewayV2HTTPRequest{
+				RequestContext: events.APIGatewayV2HTTPRequestContext{
+					HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+						Method: "POST",
+						Path:   "/api",
+					},
+				},
 				Headers: map[string]string{
 					"Authorization": "Bearer fake-token",
 				},
@@ -148,9 +180,13 @@ func TestRouter(t *testing.T) {
 		})
 
 		t.Run("GET /", func(t *testing.T) {
-			req := events.APIGatewayProxyRequest{
-				HTTPMethod: "GET",
-				Path:       "/api",
+			req := events.APIGatewayV2HTTPRequest{
+				RequestContext: events.APIGatewayV2HTTPRequestContext{
+					HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+						Method: "GET",
+						Path:   "/api",
+					},
+				},
 			}
 			res, err := lmd.Handler(context.Background(), req)
 			assert.Equal(t, nil, err, "Error must not be nil")
@@ -162,11 +198,11 @@ func TestRouter(t *testing.T) {
 
 	t.Run("Overlapping routes", func(t *testing.T) {
 		router := NewRouter("")
-		router.Route("GET", "/foo/:id", func(_ context.Context, _ events.APIGatewayProxyRequest) (res events.APIGatewayProxyResponse, err error) {
+		router.Route("GET", "/foo/:id", func(_ context.Context, _ events.APIGatewayV2HTTPRequest) (res events.APIGatewayV2HTTPResponse, err error) {
 			res.Body = "/foo/:id"
 			return res, nil
 		})
-		router.Route("POST", "/foo/bar", func(_ context.Context, _ events.APIGatewayProxyRequest) (res events.APIGatewayProxyResponse, err error) {
+		router.Route("POST", "/foo/bar", func(_ context.Context, _ events.APIGatewayV2HTTPRequest) (res events.APIGatewayV2HTTPResponse, err error) {
 			res.Body = "/foo/bar"
 			return res, nil
 		})
@@ -175,29 +211,44 @@ func TestRouter(t *testing.T) {
 		// over a map to match routes, which is non-deterministic, meaning
 		// sometimes we may match the route and sometimes not
 		for i := 1; i <= 10; i++ {
-			res, _ := router.Handler(context.Background(), events.APIGatewayProxyRequest{
-				HTTPMethod: "POST",
-				Path:       "/foo/bar",
-			})
+			req := events.APIGatewayV2HTTPRequest{
+				RequestContext: events.APIGatewayV2HTTPRequestContext{
+					HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+						Method: "POST",
+						Path:   "/foo/bar",
+					},
+				},
+			}
+			res, _ := router.Handler(context.Background(), req)
 			assert.Equal(t, "/foo/bar", res.Body, "request must match /foo/bar route")
 		}
 
-		res, _ := router.Handler(context.Background(), events.APIGatewayProxyRequest{
-			HTTPMethod: "DELETE",
-			Path:       "/foo/bar",
-		})
+		req := events.APIGatewayV2HTTPRequest{
+			RequestContext: events.APIGatewayV2HTTPRequestContext{
+				HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+					Method: "DELETE",
+					Path:   "/foo/bar",
+				},
+			},
+		}
+		res, _ := router.Handler(context.Background(), req)
 		assert.Equal(t, http.StatusMethodNotAllowed, res.StatusCode, "Status code must be 405")
 
-		res, _ = router.Handler(context.Background(), events.APIGatewayProxyRequest{
-			HTTPMethod: "GET",
-			Path:       "/foo/bar2",
-		})
+		req = events.APIGatewayV2HTTPRequest{
+			RequestContext: events.APIGatewayV2HTTPRequestContext{
+				HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+					Method: "GET",
+					Path:   "/foo/bar2",
+				},
+			},
+		}
+		res, _ = router.Handler(context.Background(), req)
 		assert.Equal(t, "/foo/:id", res.Body, "Body must match")
 	})
 }
 
-func listSomethings(ctx context.Context, req events.APIGatewayProxyRequest) (
-	res events.APIGatewayProxyResponse,
+func listSomethings(ctx context.Context, req events.APIGatewayV2HTTPRequest) (
+	res events.APIGatewayV2HTTPResponse,
 	err error,
 ) {
 	// parse input
@@ -219,8 +270,8 @@ func listSomethings(ctx context.Context, req events.APIGatewayProxyRequest) (
 	return MarshalResponse(http.StatusOK, nil, output)
 }
 
-func postSomething(ctx context.Context, req events.APIGatewayProxyRequest) (
-	res events.APIGatewayProxyResponse,
+func postSomething(ctx context.Context, req events.APIGatewayV2HTTPRequest) (
+	res events.APIGatewayV2HTTPResponse,
 	err error,
 ) {
 	var input mockPostRequest
@@ -239,8 +290,8 @@ func postSomething(ctx context.Context, req events.APIGatewayProxyRequest) (
 	}, output)
 }
 
-func getSomething(ctx context.Context, req events.APIGatewayProxyRequest) (
-	res events.APIGatewayProxyResponse,
+func getSomething(ctx context.Context, req events.APIGatewayV2HTTPRequest) (
+	res events.APIGatewayV2HTTPResponse,
 	err error,
 ) {
 	// parse input
@@ -259,8 +310,8 @@ func getSomething(ctx context.Context, req events.APIGatewayProxyRequest) (
 	return MarshalResponse(http.StatusOK, nil, output)
 }
 
-func listStuff(ctx context.Context, req events.APIGatewayProxyRequest) (
-	res events.APIGatewayProxyResponse,
+func listStuff(ctx context.Context, req events.APIGatewayV2HTTPRequest) (
+	res events.APIGatewayV2HTTPResponse,
 	err error,
 ) {
 	// parse input
@@ -276,8 +327,8 @@ func listStuff(ctx context.Context, req events.APIGatewayProxyRequest) (
 }
 
 func logger(next Handler) Handler {
-	return func(ctx context.Context, req events.APIGatewayProxyRequest) (
-		res events.APIGatewayProxyResponse,
+	return func(ctx context.Context, req events.APIGatewayV2HTTPRequest) (
+		res events.APIGatewayV2HTTPResponse,
 		err error,
 	) {
 		// [LEVEL] [METHOD PATH] [CODE] EXTRA
@@ -301,8 +352,8 @@ func logger(next Handler) Handler {
 		log = append(log, fmt.Sprintf(
 			format,
 			level,
-			req.HTTPMethod,
-			req.Path,
+			req.RequestContext.HTTP.Method,
+			req.RequestContext.HTTP.Path,
 			code,
 			extra,
 		))
@@ -312,8 +363,8 @@ func logger(next Handler) Handler {
 }
 
 func auth(next Handler) Handler {
-	return func(ctx context.Context, req events.APIGatewayProxyRequest) (
-		res events.APIGatewayProxyResponse,
+	return func(ctx context.Context, req events.APIGatewayV2HTTPRequest) (
+		res events.APIGatewayV2HTTPResponse,
 		err error,
 	) {
 		auth := req.Headers["Authorization"]

@@ -1,6 +1,6 @@
 // lmdrouter is a simple-to-use library for writing AWS Lambda functions in Go
 // that listen to events of type API Gateway Proxy Request (represented by the
-// `events.APIGatewayProxyRequest` type of the github.com/aws-lambda-go/events
+// `events.APIGatewayV2HTTPRequest` type of the github.com/aws-lambda-go/events
 // package).
 //
 // The library allows creating functions that can match requests based on their
@@ -98,8 +98,8 @@ type resource struct {
 // Example middleware that logs all requests:
 //
 //     func loggerMiddleware(next lmdrouter.Handler) lmdrouter.Handler {
-//         return func(ctx context.Context, req events.APIGatewayProxyRequest) (
-//             res events.APIGatewayProxyResponse,
+//         return func(ctx context.Context, req events.APIGatewayV2HTTPRequest) (
+//             res events.APIGatewayV2HTTPResponse,
 //             err error,
 //         ) {
 //             format := "[%s] [%s %s] [%d]%s"
@@ -133,8 +133,8 @@ type Middleware func(Handler) Handler
 //
 // Example:
 //
-//     func listSomethings(ctx context.Context, req events.APIGatewayProxyRequest) (
-//         res events.APIGatewayProxyResponse,
+//     func listSomethings(ctx context.Context, req events.APIGatewayV2HTTPRequest) (
+//         res events.APIGatewayV2HTTPResponse,
 //         err error,
 //     ) {
 //         // parse input
@@ -150,8 +150,8 @@ type Middleware func(Handler) Handler
 //         return lmdrouter.MarshalResponse(http.StatusOK, nil, output)
 //     }
 //
-type Handler func(context.Context, events.APIGatewayProxyRequest) (
-	events.APIGatewayProxyResponse,
+type Handler func(context.Context, events.APIGatewayV2HTTPRequest) (
+	events.APIGatewayV2HTTPResponse,
 	error,
 )
 
@@ -243,8 +243,8 @@ func (l *Router) Route(method, path string, handler Handler, middleware ...Middl
 //
 func (l *Router) Handler(
 	ctx context.Context,
-	req events.APIGatewayProxyRequest,
-) (events.APIGatewayProxyResponse, error) {
+	req events.APIGatewayV2HTTPRequest,
+) (events.APIGatewayV2HTTPResponse, error) {
 	rsrc, err := l.matchRequest(&req)
 	if err != nil {
 		return HandleError(err)
@@ -262,12 +262,12 @@ func (l *Router) Handler(
 	return handler(ctx, req)
 }
 
-func (l *Router) matchRequest(req *events.APIGatewayProxyRequest) (
+func (l *Router) matchRequest(req *events.APIGatewayV2HTTPRequest) (
 	rsrc resource,
 	err error,
 ) {
 	// remove trailing slash from request path
-	req.Path = strings.TrimSuffix(req.Path, "/")
+	req.RequestContext.HTTP.Path = strings.TrimSuffix(req.RequestContext.HTTP.Path, "/")
 
 	negErr := HTTPError{
 		Code:    http.StatusNotFound,
@@ -277,20 +277,20 @@ func (l *Router) matchRequest(req *events.APIGatewayProxyRequest) (
 	// find a route that matches the request
 	for _, r := range l.routes {
 		// does the path match?
-		matches := r.re.FindStringSubmatch(req.Path)
+		matches := r.re.FindStringSubmatch(req.RequestContext.HTTP.Path)
 		if matches == nil {
 			continue
 		}
 
 		// do we have this method?
 		var ok bool
-		rsrc, ok = r.methods[req.HTTPMethod]
+		rsrc, ok = r.methods[req.RequestContext.HTTP.Method]
 		if !ok {
 			// we matched a route, but it didn't support this method. Mark negErr
 			// with a 405 error, but continue, we might match another route
 			negErr = HTTPError{
 				Code:    http.StatusMethodNotAllowed,
-				Message: fmt.Sprintf("%s requests not supported by this resource", req.HTTPMethod),
+				Message: fmt.Sprintf("%s requests not supported by this resource", req.RequestContext.HTTP.Method),
 			}
 			continue
 		}

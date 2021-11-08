@@ -9,14 +9,14 @@ import (
 
 func TestBasicAuth(t *testing.T) {
 	t.Run("no auth header", func(t *testing.T) {
-		req := events.APIGatewayProxyRequest{}
+		req := events.APIGatewayV2HTTPRequest{}
 		user, pass := BasicAuth(req)
 		assert.Equal(t, "", user, "user must be empty")
 		assert.Equal(t, "", pass, "pass must be empty")
 	})
 
 	t.Run("invalid auth header", func(t *testing.T) {
-		req := events.APIGatewayProxyRequest{
+		req := events.APIGatewayV2HTTPRequest{
 			Headers: map[string]string{
 				"Authorization": "Bla",
 			},
@@ -27,7 +27,7 @@ func TestBasicAuth(t *testing.T) {
 	})
 
 	t.Run("valid auth header", func(t *testing.T) {
-		req := events.APIGatewayProxyRequest{
+		req := events.APIGatewayV2HTTPRequest{
 			Headers: map[string]string{
 				"Authorization": "Basic dXNlcm5hbWU6cGFzc3BocmFzZQ==",
 			},

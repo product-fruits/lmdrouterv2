@@ -8,13 +8,13 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 )
 
-// MarshalResponse generated an events.APIGatewayProxyResponse object that can
+// MarshalResponse generated an events.APIGatewayV2HTTPResponse object that can
 // be directly returned via the lambda's handler function. It receives an HTTP
 // status code for the response, a map of HTTP headers (can be empty or nil),
 // and a value (probably a struct) representing the response body. This value
 // will be marshaled to JSON (currently without base 64 encoding).
 func MarshalResponse(status int, headers map[string]string, data interface{}) (
-	events.APIGatewayProxyResponse,
+	events.APIGatewayV2HTTPResponse,
 	error,
 ) {
 	b, err := json.Marshal(data)
@@ -28,7 +28,7 @@ func MarshalResponse(status int, headers map[string]string, data interface{}) (
 	}
 	headers["Content-Type"] = "application/json; charset=UTF-8"
 
-	return events.APIGatewayProxyResponse{
+	return events.APIGatewayV2HTTPResponse{
 		StatusCode:      status,
 		IsBase64Encoded: false,
 		Headers:         headers,
@@ -41,7 +41,7 @@ func MarshalResponse(status int, headers map[string]string, data interface{}) (
 // name of the status code is used as the error message instead.
 var ExposeServerErrors = true
 
-// HandleError generates an events.APIGatewayProxyResponse from an error value.
+// HandleError generates an events.APIGatewayV2HTTPResponse from an error value.
 // If the error is an HTTPError, the response's status code will be taken from
 // the error. Otherwise, the error is assumed to be 500 Internal Server Error.
 // Regardless, all errors will generate a JSON response in the format
@@ -49,7 +49,7 @@ var ExposeServerErrors = true
 // This format cannot currently be changed. If you do not wish to expose server
 // errors (i.e. errors whose status code is 500 or above), set the
 // ExposeServerErrors global variable to false.
-func HandleError(err error) (events.APIGatewayProxyResponse, error) {
+func HandleError(err error) (events.APIGatewayV2HTTPResponse, error) {
 	var httpErr HTTPError
 	if !errors.As(err, &httpErr) {
 		httpErr = HTTPError{

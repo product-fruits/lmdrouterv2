@@ -48,7 +48,7 @@ var boolRegex = regexp.MustCompile(`^1|true|on|enabled$`)
 //     }
 //
 func UnmarshalRequest(
-	req events.APIGatewayProxyRequest,
+	req events.APIGatewayV2HTTPRequest,
 	body bool,
 	target interface{},
 ) error {
@@ -62,7 +62,7 @@ func UnmarshalRequest(
 	return unmarshalEvent(req, target)
 }
 
-func unmarshalEvent(req events.APIGatewayProxyRequest, target interface{}) error {
+func unmarshalEvent(req events.APIGatewayV2HTTPRequest, target interface{}) error {
 	rv := reflect.ValueOf(target)
 	if rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return errors.New("invalid unmarshal target, must be pointer to struct")
@@ -85,17 +85,14 @@ func unmarshalEvent(req events.APIGatewayProxyRequest, target interface{}) error
 		}
 
 		var sourceMap map[string]string
-		var multiMap map[string][]string
 
 		switch components[0] {
 		case "query":
 			sourceMap = req.QueryStringParameters
-			multiMap = req.MultiValueQueryStringParameters
 		case "path":
 			sourceMap = req.PathParameters
 		case "header":
 			sourceMap = req.Headers
-			multiMap = req.MultiValueHeaders
 		default:
 			return fmt.Errorf(
 				"invalid param location %q for field %s",
@@ -107,7 +104,6 @@ func unmarshalEvent(req events.APIGatewayProxyRequest, target interface{}) error
 			typeField.Type,
 			valueField,
 			sourceMap,
-			multiMap,
 			components[1],
 		)
 		if err != nil {
@@ -117,7 +113,7 @@ func unmarshalEvent(req events.APIGatewayProxyRequest, target interface{}) error
 	return nil
 }
 
-func unmarshalBody(req events.APIGatewayProxyRequest, target interface{}) (
+func unmarshalBody(req events.APIGatewayV2HTTPRequest, target interface{}) (
 	err error,
 ) {
 	if req.IsBase64Encoded {
@@ -146,7 +142,6 @@ func unmarshalField(
 	typeField reflect.Type,
 	valueField reflect.Value,
 	params map[string]string,
-	multiParam map[string][]string,
 	param string,
 ) error {
 	switch typeField.Kind() {
@@ -192,28 +187,6 @@ func unmarshalField(
 				b := boolRegex.MatchString(strings.ToLower(val))
 				valueField.Set(reflect.ValueOf(&b))
 			}
-		}
-	case reflect.Slice:
-		// we'll be extracting values from multiParam, generating a slice and
-		// putting it in valueField
-		strs, ok := multiParam[param]
-		if ok {
-			slice := reflect.MakeSlice(typeField, len(strs), len(strs))
-
-			for i, str := range strs {
-				err := unmarshalField(
-					typeField.Elem(),
-					slice.Index(i),
-					map[string]string{"param": str},
-					nil,
-					"param",
-				)
-				if err != nil {
-					return err
-				}
-			}
-
-			valueField.Set(slice)
 		}
 	}
 
