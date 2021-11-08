@@ -1,4 +1,4 @@
-module github.com/aquasecurity/lmdrouter
+module github.com/shodgson/lmdrouterv2
 
 go 1.14
 

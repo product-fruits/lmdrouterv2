@@ -54,7 +54,7 @@
 // API Gateway response (only JSON responses are currently generated). See the
 // MarshalResponse function for more information.
 //
-package lmdrouter
+package lmdrouterv2
 
 import (
 	"context"

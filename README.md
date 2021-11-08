@@ -1,8 +1,9 @@
-# lmdrouter
+# lmdrouterv2
 
-[![](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue&style=flat-square)](https://godoc.org/github.com/aquasecurity/lmdrouter) [![](https://img.shields.io/github/license/aquasecurity/lmdrouter?style=flat-square)](LICENSE) [![Build Status](https://travis-ci.org/aquasecurity/lmdrouter.svg?branch=master)](https://travis-ci.org/aquasecurity/lmdrouter)
+[![](https://img.shields.io/static/v1?label=godoc&message=reference&color=blue&style=flat-square)](https://godoc.org/github.com/shodgson/lmdrouterv2) [![](https://img.shields.io/github/license/shodgson/lmdrouterv2?style=flat-square)](LICENSE) 
 
 **Go HTTP router library for AWS API Gateway-invoked Lambda Functions**
+**Full credit to [aquasecurity](https://github.com/aquasecurity/lmdrouter) for developing the router library for the AWS REST API (V1)**
 
 ## Table of Contents
 
@@ -16,7 +17,7 @@
 
 ## Overview
 
-`lmdrouter` is a simple-to-use library for writing AWS Lambda functions in Go
+`lmdrouterv2` is a simple-to-use library for writing AWS Lambda functions in Go
 that listen to events of type API Gateway Proxy Request. It allows creating a
 lambda function that can match requests based on their URI, just like an HTTP
 server would.
@@ -61,25 +62,25 @@ This is a very early, alpha release. API is subject to change.
 ## Installation
 
 ```shell
-go get github.com/aquasecurity/lmdrouter
+go get github.com/shodgson/lmdrouterv2
 ```
 
 ## Usage
 
-`lmdrouter` is meant to be used inside Go Lambda functions.
+`lmdrouterv2` is meant to be used inside Go Lambda functions.
 
 ```go
 package main
 
 import (
     "github.com/aws/aws-lambda-go/lambda"
-    "github.com/aquasecurity/lmdrouter"
+    "github.com/shodgson/lmdrouterv2"
 )
 
-var router *lmdrouter.Router
+var router *lmdrouterv2.Router
 
 func init() {
-    router = lmdrouter.NewRouter("/api", loggerMiddleware, authMiddleware)
+    router = lmdrouterv2.NewRouter("/api", loggerMiddleware, authMiddleware)
     router.Route("GET", "/", listSomethings)
     router.Route("POST", "/", postSomething, someOtherMiddleware)
     router.Route("GET", "/:id", getSomething)
@@ -105,42 +106,42 @@ type postSomethingInput struct {
     Date    time.Time `json:"date"`
 }
 
-func listSomethings(ctx context.Context, req events.APIGatewayProxyRequest) (
+func listSomethings(ctx context.Context, req events.APIGatewayV2HTTPRequest) (
     res events.APIGatewayProxyResponse,
     err error,
 ) {
     // parse input from request and path parameters
     var input listSomethingsInput
-    err = lmdrouter.UnmarshalRequest(req, false, &input)
+    err = lmdrouterv2.UnmarshalRequest(req, false, &input)
     if err != nil {
-        return lmdrouter.HandleError(err)
+        return lmdrouterv2.HandleError(err)
     }
 
     // call some business logic that generates an output struct
     // ...
 
-    return lmdrouter.MarshalResponse(http.StatusOK, nil, output)
+    return lmdrouterv2.MarshalResponse(http.StatusOK, nil, output)
 }
 
-func postSomethings(ctx context.Context, req events.APIGatewayProxyRequest) (
+func postSomethings(ctx context.Context, req events.APIGatewayV2HTTPRequest) (
     res events.APIGatewayProxyResponse,
     err error,
 ) {
     // parse input from request body
     var input postSomethingsInput
-    err = lmdrouter.UnmarshalRequest(req, true, &input)
+    err = lmdrouterv2.UnmarshalRequest(req, true, &input)
     if err != nil {
-        return lmdrouter.HandleError(err)
+        return lmdrouterv2.HandleError(err)
     }
 
     // call some business logic that generates an output struct
     // ...
 
-    return lmdrouter.MarshalResponse(http.StatusCreated, nil, output)
+    return lmdrouterv2.MarshalResponse(http.StatusCreated, nil, output)
 }
 
-func loggerMiddleware(next lmdrouter.Handler) lmdrouter.Handler {
-    return func(ctx context.Context, req events.APIGatewayProxyRequest) (
+func loggerMiddleware(next lmdrouterv2.Handler) lmdrouterv2.Handler {
+    return func(ctx context.Context, req events.APIGatewayV2HTTPRequest) (
         res events.APIGatewayProxyResponse,
         err error,
     ) {
