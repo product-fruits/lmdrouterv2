@@ -223,7 +223,7 @@ func (l *Router) Route(method, path string, handler Handler, middleware ...Middl
 //
 //     import (
 //         "github.com/aws/aws-lambda-go/lambda"
-//         "github.com/aquasecurity/lmdrouter"
+//         lmdrouter "github.com/shodgson/lmdrouterv2"
 //     )
 //
 //     var router *lmdrouter.Router
