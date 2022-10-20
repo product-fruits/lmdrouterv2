@@ -1,4 +1,4 @@
-module github.com/shodgson/lmdrouterv2
+module github.com/product-fruits/lmdrouterv2
 
 go 1.14
 
